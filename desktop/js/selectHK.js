@@ -19,7 +19,14 @@ $('#selectHK').on('change', function () {
 				return
 			}
 			cmds = json_decode(data.result)
-			for (logicalId of ['refresh', 'identify', 'target_info']) {
+			for (logicalId of [
+				'refresh',
+				'identify',
+				'target_info',
+				'target_action',
+				'position',
+				'state'
+			]) {
 				options = ""
 				activ = ""
 				for (cmd of cmds[logicalId]) {

@@ -25,6 +25,7 @@
 		"subType": "slider",
 		"name": "{{Fenêtre, position cible (action)}}",
 		"visible": "1",
+		"value" : "w_target_info",
 		"order": "4"
 	},
 	"w_position": {
@@ -60,6 +61,7 @@
 		"subType": "slider",
 		"name": "{{Store, position cible (action)}}",
 		"visible": "1",
+		"value" : "s_target_info",
 		"order": "9"
 	},
 	"s_position": {

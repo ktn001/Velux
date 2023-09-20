@@ -145,7 +145,20 @@ class velux extends eqLogic {
 			'target_info' => [
 				'type' => 'info',
 				'subType' => 'numeric',
+			],
+			'target_action' => [
+				'type' => 'action',
+				'subType' => 'slider',
+			],
+			'position' => [
+				'type' => 'info',
+				'subType' => 'numeric',
+			],
+			'state' => [
+				'type' => 'info',
+				'subType' => 'numeric',
 			]
+			
 		];
 		foreach ($cmds as $logicalId => $cmd) {
 			$actual = 0;
@@ -249,6 +262,22 @@ class velux extends eqLogic {
 	public function postRemove() {
 	}
 
+	public function postAjax() {
+		$cmdFile = __DIR__ . "/../config/cmds.json";
+		$configs = json_decode(file_get_contents($cmdFile),true);
+		foreach ($configs as $logicalId => $config) {
+			if (! array_key_exists('value',$config)) {
+				continue;
+			}
+			$cmd = $this->getCmd(null, $logicalId);
+			$valueCmd = $this->getCmd(null, $config['value']);
+			if ($cmd->getValue() != $valueCmd->getid()) {
+				$cmd->setValue($valueCmd->getId());
+				$cmd->save();
+			}
+		}
+	}
+
 	/*     * **********************Getteur Setteur*************************** */
 }
 
@@ -271,8 +300,28 @@ class veluxCmd extends cmd {
 	}
 	*/
 
+	public function preSave() {
+		if ($this->getType() == 'info') {
+			$value = $this->getConfiguration('linkedCmd');
+			if ($value != '') {
+				$this->setValue($value);
+			}
+		}
+	}
+
 	// Exécution d'une commande
 	public function execute($_options = array()) {
+		switch ($this->getType()) {
+		case 'info':
+			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
+			break;
+		case 'action':
+			log::add("velux","info","11111111");
+			if ($this->getConfiguration('linkedCmd') != '') {
+				$cmd = cmd::byId(str_replace('#', '', $this->getConfiguration('linkedCmd')));
+				return $cmd->execcmd($_options);
+			}
+		}
 	}
 
 	/*     * **********************Getteur Setteur*************************** */

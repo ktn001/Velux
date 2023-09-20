@@ -25,7 +25,7 @@ function selectHK (model) {
 	    closeText: '',
 	    autoOpen: false,
 	    modal: true,
-	    height:260,
+	    height:400,
 	    width: 400
 	})
     }

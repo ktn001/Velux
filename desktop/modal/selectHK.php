@@ -28,6 +28,21 @@ include_file('desktop', 'selectHK', 'css', 'velux');
 				<select class="col-sm-7 input-sm hkCmdSelector" data-logicalId="target_info">
 				<select>
 			</div>
+			<div>
+				<label class="col-sm-5 control-label input-sm">{{Position cible (action)}}:</label>
+				<select class="col-sm-7 input-sm hkCmdSelector" data-logicalId="target_action">
+				<select>
+			</div>
+			<div>
+				<label class="col-sm-5 control-label input-sm">{{Position}}:</label>
+				<select class="col-sm-7 input-sm hkCmdSelector" data-logicalId="position">
+				<select>
+			</div>
+			<div>
+				<label class="col-sm-5 control-label input-sm">{{Etat}}:</label>
+				<select class="col-sm-7 input-sm hkCmdSelector" data-logicalId="state">
+				<select>
+			</div>
 		</form>
 	</div>
 </div>
