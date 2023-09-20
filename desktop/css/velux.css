@@ -1,0 +1,6 @@
+/* Couleur du bouton "Supprimer" dans les modals */
+.ui-dialog-buttonset .ui-button.btn-delete {
+	color: var(--sc-lightTxt-color) !important;
+	background-color: var(--al-danger-color) !important;
+}
+

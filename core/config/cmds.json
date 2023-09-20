@@ -1,0 +1,79 @@
+{
+	"refresh": {
+		"type": "action",
+		"subType": "other",
+		"name": "{{Rafraichir}}",
+		"visible": "1",
+		"order": "1"
+	},
+	"w_identify": {
+		"type": "action",
+		"subType": "other",
+		"name": "{{Identifier fenêtre}}",
+		"visible": "0",
+		"order": "2"
+	},
+	"w_target_info": {
+		"type": "info",
+		"subType": "numeric",
+		"name": "{{Fenêtre, position cible (info)}}",
+		"visible": "1",
+		"order": "3"
+	},
+	"w_target_action": {
+		"type": "action",
+		"subType": "slider",
+		"name": "{{Fenêtre, position cible (action)}}",
+		"visible": "1",
+		"order": "4"
+	},
+	"w_position": {
+		"type": "info",
+		"subType": "numeric",
+		"name": "{{Position fenêtre}}",
+		"visible": "1",
+		"order": "5"
+	},
+	"w_state": {
+		"type": "info",
+		"subType": "numeric",
+		"name": "{{Etat fenêtre}}",
+		"visible": "1",
+		"order": "6"
+	},
+	"s_identify": {
+		"type": "action",
+		"subType": "other",
+		"name": "{{Identifier store}}",
+		"visible": "0",
+		"order": "7"
+	},
+	"s_target_info": {
+		"type": "info",
+		"subType": "numeric",
+		"name": "{{Store, position cible (info)}}",
+		"visible": "1",
+		"order": "8"
+	},
+	"s_target_action": {
+		"type": "action",
+		"subType": "slider",
+		"name": "{{Store, position cible (action)}}",
+		"visible": "1",
+		"order": "9"
+	},
+	"s_position": {
+		"type": "info",
+		"subType": "numeric",
+		"name": "{{Position store}}",
+		"visible": "1",
+		"order": "10"
+	},
+	"s_state": {
+		"type": "info",
+		"subType": "numeric",
+		"name": "{{Etat store}}",
+		"visible": "1",
+		"order": "11"
+	}
+}

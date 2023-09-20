@@ -14,6 +14,87 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* Sélection d'un équipement HK à associer */
+function selectHK (model) {
+    if ($('#modContainer_selectHK').length == 0) {
+	$('body').append('<div id="modContainer_selectHK"></div>')
+	jQuery.ajaxSetup({async: false})
+	$('#modContainer_selectHK').load('index.php?v=d&plugin=velux&modal=selectHK')
+	jQuery.ajaxSetup({async: true})
+	$('#modContainer_selectHK').dialog({
+	    closeText: '',
+	    autoOpen: false,
+	    modal: true,
+	    height:260,
+	    width: 400
+	})
+    }
+    if (model == 'Window') {
+	modalTitle = "{{Sélection d'une fenêtre}}"
+	inputId = "#hkWindow"
+	prefix = 'w_'
+    } else if (model == "External Cover") {
+	modalTitle = "{{Sélection d'un store externe}}"
+	inputId = "#hkStore"
+	prefix = 's_'
+    } else {
+	modalTitle = "{{ERREUR}}"
+    }
+    options = ""
+    for (eq of hkEq[model]) {
+	options += "<option value='" + eq.id + "'>" + eq.humanName + "</options>"
+    }
+    $("#modal_selectHK #selectHK").empty().append(options).trigger('change')
+    $('#modContainer_selectHK').dialog({'title': modalTitle})
+    $('#modContainer_selectHK').dialog('option', 'buttons', [{
+	text: "{{Annuler}}",
+	click: function() {
+	    $(this).dialog("close")
+	}
+    },
+    {
+	text: "{{Supprimer}}",
+	class: "btn-delete",
+	click: function() {
+	    $(this).dialog("close")
+	    $(inputId).val("")
+	}
+    },
+    {
+	text: "{{Valider}}",
+	click: function() {
+	    $(this).dialog("close")
+	    $(inputId).val("#" + $('#modal_selectHK #selectHK').text() + "#")
+	    associations = modal_selectHK_getResult()
+	    for (logical in associations) {
+		if (logical == 'refresh') {
+		} else {
+		    logicalId = prefix + logical
+		    $('#table_cmd [data-l1key="logicalId"]').each(function() {
+			if ($(this).val() == logicalId) {
+			    value = '#' + associations[logical]['humanName'] + '#'
+			    $(this).closest('tr').find('[data-l1key="configuration"][data-l2key="linkedCmd"]').val(value)
+			    return false
+			}
+		    })
+		}
+	    }
+	}
+    }])
+
+    $('#modContainer_selectHK').dialog('open')
+}
+
+/* Click sur le bouton de choix de fenêtre HK */
+$("#selectWindow").off('click').on('click',function () {
+    selectHK('Window')
+})
+
+/* Click sur le bouton de choix de store HK */
+$("#selectStore").off('click').on('click',function () {
+    selectHK('External Cover')
+})
+
 /* Permet la réorganisation des commandes dans l'équipement */
 $("#table_cmd").sortable({
   axis: "y",
@@ -42,13 +123,16 @@ function addCmdToTable(_cmd) {
   tr += '<span class="input-group-btn"><a class="cmdAction btn btn-sm btn-default" data-l1key="chooseIcon" title="{{Choisir une icône}}"><i class="fas fa-icons"></i></a></span>'
   tr += '<span class="cmdAttr input-group-addon roundedRight" data-l1key="display" data-l2key="icon" style="font-size:19px;padding:0 5px 0 0!important;"></span>'
   tr += '</div>'
-  tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display:none;margin-top:5px;" title="{{Commande info liée}}">'
-  tr += '<option value="">{{Aucune}}</option>'
-  tr += '</select>'
   tr += '</td>'
   tr += '<td>'
-  tr += '<span class="type" type="' + init(_cmd.type) + '">' + jeedom.cmd.availableType() + '</span>'
-  tr += '<span class="subType" subType="' + init(_cmd.subType) + '"></span>'
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="type" style="width:100px; margin-bottom:3px" disabled></input>'
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="subType" style="width:100px; margin-top:5px" disabled></input>'
+  tr += '</td>'
+  tr += '<td>'
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="logicalId" disabled></input>'
+  tr += '</td>'
+  tr += '<td>'
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="linkedCmd"></input>'
   tr += '</td>'
   tr += '<td>'
   tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isVisible" checked/>{{Afficher}}</label> '

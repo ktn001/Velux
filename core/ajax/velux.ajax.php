@@ -29,7 +29,19 @@ try {
   */
     ajax::init();
 
+    $action = init('action');
 
+    if ($action == 'getCmdAssociationPropositions') {
+	$hkEq_id = init('hkEq_id');
+	ajax::success(json_encode(velux::getCmdAssociationPropositions($hkEq_id)));
+    }
+
+    if ($action == 'saveHkCmdSelections') {
+	$hkEq_id = init('hkEq_id');
+	$values = init('values');
+	config::save('hkCmds_' . $hkEq_id, $values, 'velux');
+	ajax::success();
+    }
 
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exeption*************** */
