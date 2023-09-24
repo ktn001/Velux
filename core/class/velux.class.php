@@ -71,21 +71,6 @@ class velux extends eqLogic {
 	*/
 
 	/*
-	* Permet de déclencher une action avant modification d'une variable de configuration du plugin
-	* Exemple avec la variable "param3"
-	public static function preConfig_param3( $value ) {
-		// do some checks or modify on $value
-		return $value;
-	}
-	*/
-
-	/*
-	* Permet de déclencher une action après modification d'une variable de configuration du plugin
-	* Exemple avec la variable "param3"
-	public static function postConfig_param3($value) {
-		// no return value
-	}
-	*/
 
 	/*
 	 * Permet d'indiquer des éléments supplémentaires à remonter dans les informations de configuration
@@ -94,6 +79,14 @@ class velux extends eqLogic {
 		return "les infos essentiel de mon plugin";
 	 }
 	 */
+
+	public static function listenerHandler($_option) {
+		log::add("velux","info","listenerHandler: " . json_encode($_option));
+		if ($_options['value'] == 2) {
+			$velux = self::byId($_option['id']);
+			$velux->doMove();
+		}
+	}
 
 	public static function getHkEqLogics ($model=null, $onlyUnUsed=True) {
 		$hkEqType = 'hkControl';
@@ -250,8 +243,8 @@ class velux extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->setOrder($config['order']);
 			$cmd->save();
-
 		}
+		$this->setListener();
 	}
 
 	// Fonction exécutée automatiquement avant la suppression de l'équipement
@@ -276,6 +269,75 @@ class velux extends eqLogic {
 				$cmd->save();
 			}
 		}
+		$this->setListener();
+	}
+
+	/*
+	 * Fonctions pour la gestion du listener
+	 */
+	private function getListener() {
+		return listener::byClassAndFunction(__CLASS__, 'listenerHandler', array('id' => $this->getId()));
+	}
+
+	private function removeListener() {
+		$listener = $this->getListener();
+		if (is_object($listener)) {
+			$listener->remove();
+		}
+	}
+
+	private function setListener() {
+		if ($this->getIsEnable() == 0) {
+			$this->removeListener();
+			return;
+		}
+		$listener = $this->getListener();
+		if (!is_object($listener)) {
+			$listener = new listener();
+			$listener->setClass(__CLASS__);
+			$listener->setFunction('listenerHandler');
+			$listener->setOption(array('id' => $this->getId()));
+		}
+		$listener->emptyEvent();
+		foreach (['s:', 'w:'] as $type) {
+			$logicalId = $type . 'state';
+			$cmd = $this->getCmd('info',$logicalId);
+			if (is_object($cmd)) {
+				$listener->addEvent($cmd->getId());
+			}
+			$listener->save();
+		}
+	}
+
+	public function getConsignes () {
+		$consignes = $this->getCache('consignes');
+		log::add("velux","info","XXXX " . json_encode($consignes));
+		return $consignes;
+	}
+
+	public function setConsigne ($eq, $value) {
+		$consignes = $this->getConsignes();
+		if (!is_array($consignes)) {
+			$consignes = [];
+		}
+		$consignes[$eq] = $value;
+		$this->setCache('consignes',$consignes);
+		$this->getConsignes();
+	}
+
+	public function isMoving($eq) {
+		$cmd = $this->getCmd('info',$eq . ":state");
+		if ( $cmd->execCmd() == 2) {
+			return false;
+		}
+		return true;
+	}
+
+	public function doMove() {
+		if ($this->isMoving ('s') or $this->isMoning ('w')){
+			return;
+		}
+		$consignes = $this->getConsignes();
 	}
 
 	/*     * **********************Getteur Setteur*************************** */
@@ -295,10 +357,10 @@ class veluxCmd extends cmd {
 
 	/*
 	* Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
+	*/
 	public function dontRemoveCmd() {
 		return true;
 	}
-	*/
 
 	public function preSave() {
 		if ($this->getType() == 'info') {
@@ -309,16 +371,34 @@ class veluxCmd extends cmd {
 		}
 	}
 
+	private function splitEqLogicId() {
+		$logicalId = $this->getLogicalId();
+		if (strpos($logicalId,":")  === false) {
+			return null;
+		}
+		$tokens = explode(":",$logicalId,2);
+		$result = [
+			"eq" => $tokens[0],
+			"name" => $tokens[1]
+		];
+		return $result;
+	}
+
 	// Exécution d'une commande
 	public function execute($_options = array()) {
+		$info = $this->splitEqLogicId();
 		switch ($this->getType()) {
 		case 'info':
 			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
 			break;
 		case 'action':
-			log::add("velux","info","11111111");
+			if ($info['name'] == 'target_action') {
+				$this->getEqLogic()->setConsigne($info['eq'],$_options['slider']);
+			}
 			if ($this->getConfiguration('linkedCmd') != '') {
+				
 				$cmd = cmd::byId(str_replace('#', '', $this->getConfiguration('linkedCmd')));
+				log::add("velux","info",json_encode($_options));
 				return $cmd->execcmd($_options);
 			}
 		}

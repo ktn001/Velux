@@ -204,8 +204,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
 	    <!-- Onglet des commandes de l'équipement -->
 	    <div role="tabpanel" class="tab-pane" id="commandtab">
-		<a class="btn btn-default btn-sm pull-right cmdAction" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une commande}}</a>
-		<br><br>
+		<br>
 		<div class="table-responsive">
 		    <table id="table_cmd" class="table table-bordered table-condensed">
 			<thead>
@@ -217,7 +216,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<th>{{Commande HK liée}}</th>
 				<th style="width:260px;">{{Options}}</th>
 				<th>{{Etat}}</th>
-				<th style="min-width:80px;width:200px;">{{Actions}}</th>
+				<th style="min-width:80px;width:100px;">{{Actions}}</th>
 			    </tr>
 			</thead>
 			<tbody>
