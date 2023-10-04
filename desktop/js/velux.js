@@ -56,8 +56,43 @@ function selectHK (model) {
 	text: "{{Supprimer}}",
 	class: "btn-delete",
 	click: function() {
-	    $(this).dialog("close")
-	    $(inputId).val("")
+	    msg = "{{Les commandes suivantes seront supprimées lors de la sauvagarde de l'équipement:}}<br>"
+	    msg += '<ul>'
+	    associations = modal_selectHK_getResult()
+	    for (logical in associations) {
+		if(logical != 'refresh') {
+		    logicalId = prefix + logical
+		    $('#table_cmd [data-l1key="logicalId"]').each(function() {
+			if ($(this).val() == logicalId) {
+			    msg += '<li>'
+			    msg += $(this).closest('tr').find('[data-l1key="name"]').val()
+			    msg += ' [' + logicalId + ']</li>'
+			}
+		    })
+		}
+	    }
+	    msg += '</ul>'
+	    bootbox.confirm({
+		title : " ",
+		message: msg,
+		callback: function(result) {
+		    if (result) {
+			$('#modContainer_selectHK').dialog("close")
+			$(inputId).val("")
+			for (logical in associations) {
+			    if (logical != 'refresh') {
+				logicalId = prefix + logical
+				$('#table_cmd [data-l1key="logicalId"]').each(function() {
+				    if ($(this).val() == logicalId) {
+					$(this).closest('tr').find('[data-l1key="configuration"][data-l2key="linkedCmd"]').val("")
+					return false
+				    }
+				})
+			    }
+			}
+		    }
+		}
+	    })
 	}
     },
     {
@@ -66,23 +101,57 @@ function selectHK (model) {
 	    $(this).dialog("close")
 	    $(inputId).val("#" + $('#modal_selectHK #selectHK').text() + "#")
 	    associations = modal_selectHK_getResult()
-	    for (logical in associations) {
-		if (logical == 'refresh') {
-		} else {
-		    logicalId = prefix + logical
-		    $('#table_cmd [data-l1key="logicalId"]').each(function() {
-			if ($(this).val() == logicalId) {
-			    value = '#' + associations[logical]['humanName'] + '#'
-			    $(this).closest('tr').find('[data-l1key="configuration"][data-l2key="linkedCmd"]').val(value)
-			    return false
+	    cmdCount = $('#table_cmd [data-l1key="logicalId"]').filter(function() { return $(this).val().startsWith(prefix) }).length
+	    if ( cmdCount < Object.keys(associations).length ) {
+		$.ajax({
+		    type: 'POST',
+		    url: 'plugins/velux/core/ajax/velux.ajax.php',
+		    data: {
+			action: 'getCmdConfigs'
+		    },
+		    dataType: 'json',
+		    global: false,
+		    error: function(request, status, error) {
+			handleAjaxError(request, status, error)
+		    },
+		    success: function(data) {
+			if (data.state != 'ok') {
+			    $.fn.showAlert({message: data.result, level: 'danger'})
+			    return
 			}
-		    })
-		}
+			configs = json_decode(data.result)
+			console.debug(configs)
+			for (logicalId in configs) {
+			    if (logicalId.startsWith(prefix)) {
+				console.log("Adding " + logicalId)
+				addCmdToTable(configs[logicalId])
+			    }
+			}
+			setLinkedCmd (associations, prefix)
+			return
+		    }
+		})
 	    }
+	    setLinkedCmd (associations, prefix)
 	}
     }])
 
     $('#modContainer_selectHK').dialog('open')
+}
+
+function setLinkedCmd (associations, prefix) {
+    for (logical in associations) {
+	if (logical != 'refresh') {
+	    logicalId = prefix + logical
+	    $('#table_cmd [data-l1key="logicalId"]').each(function() {
+		if ($(this).val() == logicalId) {
+		    value = '#' + associations[logical]['humanName'] + '#'
+		    $(this).closest('tr').find('[data-l1key="configuration"][data-l2key="linkedCmd"]').val(value)
+		    return false
+		}
+	    })
+	}
+    }
 }
 
 /* Click sur le bouton de choix de fenêtre HK */
@@ -116,6 +185,7 @@ function addCmdToTable(_cmd) {
   var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">'
   tr += '<td class="hidden-xs">'
   tr += '<span class="cmdAttr" data-l1key="id"></span>'
+  tr += '<span class="cmdAttr hidden" data-l1key="configuration" data-l2key="order"></span>'
   tr += '</td>'
   tr += '<td>'
   tr += '<div class="input-group">'
@@ -125,14 +195,24 @@ function addCmdToTable(_cmd) {
   tr += '</div>'
   tr += '</td>'
   tr += '<td>'
-  tr += '<input class="cmdAttr form-control input-sm" data-l1key="type" style="width:100px; margin-bottom:3px" disabled></input>'
-  tr += '<input class="cmdAttr form-control input-sm" data-l1key="subType" style="width:100px; margin-top:5px" disabled></input>'
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="type" style="margin-bottom:3px" disabled></input>'
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="subType" style="margin-top:5px" disabled></input>'
   tr += '</td>'
   tr += '<td>'
   tr += '<input class="cmdAttr form-control input-sm" data-l1key="logicalId" disabled></input>'
   tr += '</td>'
   tr += '<td>'
-  tr += '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="linkedCmd"></input>'
+  if (('logicalId' in _cmd) && _cmd.logicalId.includes(':')){
+    tr += '<label style="font-weight:400;width:100%">{{Commande HK}}:' 
+    tr +=   '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="linkedCmd"></input>'
+    tr += '</label>'
+  }
+  if (('logicalId' in _cmd) && (_cmd.logicalId == 'pause')){
+    tr += '<label style="font-weight:400;width:100%">{{Durée}}:' 
+    tr +=   '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="returnStateTime"></input>'
+    tr +=   '<span class="cmdAttr hidden" data-l1key="configuration" data-l2key="returnStateValue">0</span>'
+    tr += '</label>'
+  }
   tr += '</td>'
   tr += '<td>'
   tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isVisible" checked/>{{Afficher}}</label> '
@@ -154,18 +234,30 @@ function addCmdToTable(_cmd) {
   }
   tr += '</td>'
   tr += '</tr>'
-  $('#table_cmd tbody').append(tr)
-  var tr = $('#table_cmd tbody tr').last()
-  jeedom.eqLogic.buildSelectCmd({
-    id: $('.eqLogicAttr[data-l1key=id]').value(),
-    filter: { type: 'info' },
-    error: function (error) {
-      $('#div_alert').showAlert({ message: error.message, level: 'danger' })
-    },
-    success: function (result) {
-      tr.find('.cmdAttr[data-l1key=value]').append(result)
-      tr.setValues(_cmd, '.cmdAttr')
-      jeedom.cmd.changeType(tr, init(_cmd.subType))
+  posPreset=_cmd.configuration.order
+  if (posPreset == undefined) {
+    posPreset = 0
+  }
+  posPreset = Number(posPreset)
+  console.debug("posPreset: " + posPreset)
+  inserted = false
+  $('#table_cmd tbody tr [data-l1key="configuration"][data-l2key="order"]').each(function() {
+    currentPreset = $(this).text()
+    if (currentPreset == "") {
+      currentPreset = 0
+    }
+    currentPreset = Number(currentPreset)
+    console.log("currentPreset: " + currentPreset)
+    if (currentPreset > posPreset) {
+      $(this).closest('tr').before(tr)
+      tr = $(this).closest('tr').prev()
+      inserted = true
+      return false
     }
   })
+  if (! inserted) {
+    $('#table_cmd tbody').append(tr)
+    var tr = $('#table_cmd tbody tr').last()
+  }
+  tr.setValues(_cmd, '.cmdAttr')
 }

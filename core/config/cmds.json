@@ -1,81 +1,94 @@
 {
-	"refresh": {
-		"type": "action",
-		"subType": "other",
-		"name": "{{Rafraichir}}",
-		"visible": "1",
-		"order": "1"
-	},
 	"w:identify": {
 		"type": "action",
 		"subType": "other",
 		"name": "{{Identifier fenêtre}}",
-		"visible": "0",
-		"order": "2"
+		"isVisible": "0",
+		"configuration": {
+			"order": "1"
+		}
 	},
 	"w:target_info": {
 		"type": "info",
 		"subType": "numeric",
 		"name": "{{Fenêtre, position cible (info)}}",
-		"visible": "1",
-		"order": "3"
+		"isVisible": "0",
+		"configuration": {
+			"order": "2"
+		}
 	},
 	"w:target_action": {
 		"type": "action",
 		"subType": "slider",
 		"name": "{{Fenêtre, position cible (action)}}",
-		"visible": "1",
+		"isVisible": "1",
 		"value" : "w:target_info",
-		"order": "4"
+		"configuration": {
+			"order": "3"
+		}
 	},
 	"w:position": {
 		"type": "info",
 		"subType": "numeric",
 		"name": "{{Position fenêtre}}",
-		"visible": "1",
-		"order": "5"
+		"isVisible": "1",
+		"configuration": {
+			"order": "4"
+		}
 	},
 	"w:state": {
 		"type": "info",
 		"subType": "numeric",
 		"name": "{{Etat fenêtre}}",
-		"visible": "1",
-		"order": "6"
+		"isVisible": "1",
+		"configuration": {
+			"order": "5"
+		}
 	},
 	"s:identify": {
 		"type": "action",
 		"subType": "other",
 		"name": "{{Identifier store}}",
-		"visible": "0",
-		"order": "7"
+		"isVisible": "0",
+		"configuration": {
+			"order": "6"
+		}
 	},
 	"s:target_info": {
 		"type": "info",
 		"subType": "numeric",
 		"name": "{{Store, position cible (info)}}",
-		"visible": "1",
-		"order": "8"
+		"isVisible": "0",
+		"configuration": {
+			"order": "7"
+		}
 	},
 	"s:target_action": {
 		"type": "action",
 		"subType": "slider",
 		"name": "{{Store, position cible (action)}}",
-		"visible": "1",
+		"isVisible": "1",
 		"value" : "s:target_info",
-		"order": "9"
+		"configuration": {
+			"order": "8"
+		}
 	},
 	"s:position": {
 		"type": "info",
 		"subType": "numeric",
 		"name": "{{Position store}}",
-		"visible": "1",
-		"order": "10"
+		"isVisible": "1",
+		"configuration": {
+			"order": "9"
+		}
 	},
 	"s:state": {
 		"type": "info",
 		"subType": "numeric",
 		"name": "{{Etat store}}",
-		"visible": "1",
-		"order": "11"
+		"isVisible": "1",
+		"configuration": {
+			"order": "10"
+		}
 	}
 }

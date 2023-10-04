@@ -43,6 +43,16 @@ try {
 	ajax::success();
     }
 
+    if ($action == 'getCmdConfigs') {
+	$cmdFile = __DIR__ . '/../config/cmds.json';
+	$configs = json_decode(file_get_contents($cmdFile),true);
+	foreach (array_keys($configs) as $logicalId) {
+		$configs[$logicalId]['name']=translate::exec($configs[$logicalId]['name'],$cmdFile);
+		$configs[$logicalId]['logicalId'] = $logicalId;
+	}
+	ajax::success(json_encode($configs));
+    }
+
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exeption*************** */
 }

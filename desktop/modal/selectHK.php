@@ -14,11 +14,6 @@ include_file('desktop', 'selectHK', 'css', 'velux');
 	<div>
 		<form class="form-horizontal">
 			<div>
-				<label class="col-sm-5 control-label input-sm">{{Rafraîchir}}:</label>
-				<select class="col-sm-7 input-sm hkCmdSelector" data-logicalId="refresh">
-				<select>
-			</div>
-			<div>
 				<label class="col-sm-5 control-label input-sm">{{Identifier}}:</label>
 				<select class="col-sm-7 input-sm hkCmdSelector" data-logicalId="identify">
 				<select>

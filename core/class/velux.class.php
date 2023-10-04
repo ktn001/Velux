@@ -1,19 +1,4 @@
 <?php
-/* This file is part of Jeedom.
-*
-* Jeedom is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* Jeedom is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
-*/
 
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
@@ -21,56 +6,8 @@ require_once __DIR__  . '/../../../../core/php/core.inc.php';
 class velux extends eqLogic {
 	/*     * *************************Attributs****************************** */
 
-	/*
-	* Permet de définir les possibilités de personnalisation du widget (en cas d'utilisation de la fonction 'toHtml' par exemple)
-	* Tableau multidimensionnel - exemple: array('custom' => true, 'custom::layout' => false)
-	public static $_widgetPossibility = array();
-	*/
-
-	/*
-	* Permet de crypter/décrypter automatiquement des champs de configuration du plugin
-	* Exemple : "param1" & "param2" seront cryptés mais pas "param3"
-	public static $_encryptConfigKey = array('param1', 'param2');
-	*/
 
 	/*     * ***********************Methode static*************************** */
-
-	/*
-	* Fonction exécutée automatiquement toutes les minutes par Jeedom
-	public static function cron() {}
-	*/
-
-	/*
-	* Fonction exécutée automatiquement toutes les 5 minutes par Jeedom
-	public static function cron5() {}
-	*/
-
-	/*
-	* Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
-	public static function cron10() {}
-	*/
-
-	/*
-	* Fonction exécutée automatiquement toutes les 15 minutes par Jeedom
-	public static function cron15() {}
-	*/
-
-	/*
-	* Fonction exécutée automatiquement toutes les 30 minutes par Jeedom
-	public static function cron30() {}
-	*/
-
-	/*
-	* Fonction exécutée automatiquement toutes les heures par Jeedom
-	public static function cronHourly() {}
-	*/
-
-	/*
-	* Fonction exécutée automatiquement tous les jours par Jeedom
-	public static function cronDaily() {}
-	*/
-
-	/*
 
 	/*
 	 * Permet d'indiquer des éléments supplémentaires à remonter dans les informations de configuration
@@ -80,14 +17,60 @@ class velux extends eqLogic {
 	 }
 	 */
 
+	/*
+	 * Fonction appelée par les listener lors des changements d'état (ouverture, fermeture
+	 * ou arrêt) de la fenêtre ou du store
+	 */
 	public static function listenerHandler($_option) {
-		log::add("velux","info","listenerHandler: " . json_encode($_option));
-		if ($_options['value'] == 2) {
-			$velux = self::byId($_option['id']);
-			$velux->doMove();
+		log::add("velux","info","┌listenerHandler: " . json_encode($_option));
+		$velux = self::byId($_option['id']);
+		$cmd =  cmd::byId($_option['event_id']);
+		log::add("velux","debug","│cmd: " . $cmd->getLogicalId());
+		
+		// S'agit-il d'un changement de mouvement
+		if (substr($cmd->getLogicalId(),-6) == ":state") {
+			// Arret de l'eq
+			if ($_option['value'] == 2) {
+				$target = $velux->getCache('target');
+				if ($target < 0) {
+					// Le dernier mouvement n'a pas été provoqué par Jeedom
+					log::add("velux","info","└" . __("Le mouvement n'a pas été lancé par le plugin, mise en pause du velux.",__FILE__));
+					$velux->setPause(1);
+					$velux->setConsignes(["w"=>-1, "s"=>-1]);
+				} else {
+					//$velux->refresh();
+					sleep(1);
+					$positions = $velux->getPositions();
+					$consignes = $velux->getConsignes();
+					$logicalId = $cmd->getLogicalId();
+					$eq = substr($logicalId,0,strpos($logicalId,":"));
+					log::add("velux","debug","│eq: " . $eq);
+					log::add("velux","debug","│consigne: " . $consignes[$eq]);
+					log::add("velux","debug","│position: " . $positions[$eq]);
+					log::add("velux","debug","│target: " . $target);
+					if (($positions[$eq] != $consignes[$eq]) and ($positions[$eq] != $velux->getCache('target'))) {
+						log::add("velux","info","└" . __("L'équipement a été arrêté avant d'atteindre la position cible, mise en pause du velux.",__FILE__));
+						$velux->setPause(1);
+						$velux->setCache('target',-1);
+						$velux->setConsignes(["w"=>-1, "s"=>-1]);
+					} else {
+						log::add("velux","info","└" . __("OK pour prochain mouvement",__FILE__));
+						$velux->setCache('target',-1);
+						$velux->doMove();
+					}
+				}
+			} else {
+				log::add("velux","info","└NOOP");
+			}
+		} else {
+			log::add("velux","error","└" . sprintf(__("Le gestionnaire de listener a été appelé pour la commande %s (%s)",__FILE),$cmd->getHumanName(), $cmd->getLogicalid()));
 		}
 	}
 
+	/*
+	 * Retourne une liste des équipements Velux (fenêtre ou store) configurés
+	 * dans le plugin hkControl (homekit)
+	 */
 	public static function getHkEqLogics ($model=null, $onlyUnUsed=True) {
 		$hkEqType = 'hkControl';
 		$hkEqLogics = array();
@@ -103,6 +86,10 @@ class velux extends eqLogic {
 		return $hkEqLogics;
 	}
 
+	/*
+	 * Retourne la liste de commandes d'un équipement HK pouvant être associées
+	 * à chacune des commandes d'un équipement du plugin "velux"
+	 */
 	public static function getCmdAssociationPropositions ($hkEq_id) {
 		$hkEq = hkControl::byId($hkEq_id);
 		if (!is_object($hkEq)) {
@@ -188,85 +175,76 @@ class velux extends eqLogic {
 	}
 
 	/*
-	* Permet de crypter/décrypter automatiquement des champs de configuration des équipements
-	* Exemple avec le champ "Mot de passe" (password)
-	public function decrypt() {
-		$this->setConfiguration('password', utils::decrypt($this->getConfiguration('password')));
-	}
-	public function encrypt() {
-		$this->setConfiguration('password', utils::encrypt($this->getConfiguration('password')));
-	}
-	*/
-
-	/*
-	* Permet de modifier l'affichage du widget (également utilisable par les commandes)
-	public function toHtml($_version = 'dashboard') {}
-	*/
-
-	/*     * *********************Méthodes d'instance************************* */
-
-	// Fonction exécutée automatiquement avant la création de l'équipement
-	public function preInsert() {
-	}
-
-	// Fonction exécutée automatiquement après la création de l'équipement
-	public function postInsert() {
-	}
-
-	// Fonction exécutée automatiquement avant la mise à jour de l'équipement
-	public function preUpdate() {
-	}
-
-	// Fonction exécutée automatiquement après la mise à jour de l'équipement
-	public function postUpdate() {
-	}
-
-	// Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
-	public function preSave() {
-	}
-
-	// Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
+	 * Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
+	 */
 	public function postSave() {
 		$cmdFile = __DIR__ . "/../config/cmds.json";
 		$configs = json_decode(file_get_contents($cmdFile),true);
-		foreach ($configs as $logicalId => $config) {
-			$cmd = $this->getCmd(null, $logicalId);
-			if (is_object($cmd)) {
-				continue;
-			}
+		$cmd = $this->getCmd(null, 'refresh');
+		if (! is_object($cmd)) {
 			$cmd = new veluxCmd();
-			$cmd->setLogicalId($logicalId);
-			$cmd->setIsVisible($config['visible']);
-			$cmd->setName(translate::exec($config['name'],$cmdFile));
-			$cmd->setType($config['type']);
-			$cmd->setSubType($config['subType']);
+			$cmd->setLogicalId('refresh');
+			$cmd->setIsVisible(1);
+			$cmd->setName(__('Rafraîchir',__FILE__));
+			$cmd->setType('action');
+			$cmd->setSubType('other');
 			$cmd->setEqLogic_id($this->getId());
-			$cmd->setOrder($config['order']);
+			$cmd->setOrder(1);
 			$cmd->save();
 		}
+
+		$cmd = $this->getCmd(null, 'pause');
+		if (! is_object($cmd)) {
+			$nbCmd = count ($this->getCmd());
+			$cmd = new veluxCmd();
+			$cmd->setLogicalId('pause');
+			$cmd->setIsVisible(1);
+			$cmd->setName(__('En pause',__FILE__));
+			$cmd->setType('info');
+			$cmd->setSubType('binary');
+			$cmd->setEqLogic_id($this->getId());
+			$cmd->setOrder($nbCmd+1);
+			$cmd->save();
+		}
+
 		$this->setListener();
 	}
 
-	// Fonction exécutée automatiquement avant la suppression de l'équipement
+	/*
+	 * Fonction exécutée automatiquement avant la suppression de l'équipement
+	 */
 	public function preRemove() {
+		$this->removeListener();
 	}
 
-	// Fonction exécutée automatiquement après la suppression de l'équipement
-	public function postRemove() {
-	}
-
+	/*
+	 * Fonction exécutée automatiquement après la sauvegarde de l'équipement et
+	 * de ses commandes via l'interface WEB
+	 */
 	public function postAjax() {
 		$cmdFile = __DIR__ . "/../config/cmds.json";
 		$configs = json_decode(file_get_contents($cmdFile),true);
+
+		foreach (['w','s'] as $vtype) {
+			if ($this->getConfiguration($vtype . ":hkId") == '') {
+				foreach ($this->getCmd() as $cmd) {
+					if (strpos($cmd->getLogicalId(), $vtype . ':') === 0) {
+						$cmd->remove();
+					}
+				}
+			}
+		}
 		foreach ($configs as $logicalId => $config) {
 			if (! array_key_exists('value',$config)) {
 				continue;
 			}
 			$cmd = $this->getCmd(null, $logicalId);
+			if (is_object($cmd)) {
 			$valueCmd = $this->getCmd(null, $config['value']);
-			if ($cmd->getValue() != $valueCmd->getid()) {
-				$cmd->setValue($valueCmd->getId());
-				$cmd->save();
+				if ($cmd->getValue() != $valueCmd->getid()) {
+					$cmd->setValue($valueCmd->getId());
+					$cmd->save();
+				}
 			}
 		}
 		$this->setListener();
@@ -299,8 +277,8 @@ class velux extends eqLogic {
 			$listener->setOption(array('id' => $this->getId()));
 		}
 		$listener->emptyEvent();
-		foreach (['s:', 'w:'] as $type) {
-			$logicalId = $type . 'state';
+		foreach (['w', 's'] as $type) {
+			$logicalId = $type . ':state';
 			$cmd = $this->getCmd('info',$logicalId);
 			if (is_object($cmd)) {
 				$listener->addEvent($cmd->getId());
@@ -309,22 +287,58 @@ class velux extends eqLogic {
 		}
 	}
 
+	public function refresh() {
+		$cmd = $this->getCmd('action','refresh')->execCmd();
+	}
+
+	public function setPause ($pause) {
+		$this->checkAndUpdateCmd('pause',$pause);
+	}
+
+	public function getPause() {
+		$cmd = $this->getCmd('info','pause');
+		return ($cmd->execCmd() == 1);
+	}
+
+	/*
+	 * Retoune les consignes de position qui ont été enregistrées dans le
+	 * cache de l'équipement
+	 */
 	public function getConsignes () {
 		$consignes = $this->getCache('consignes');
-		log::add("velux","info","XXXX " . json_encode($consignes));
 		return $consignes;
 	}
 
-	public function setConsigne ($eq, $value) {
+	/*
+	 * Modification d'une consigne de position. Les nouvelles consignes
+	 * sont mise dans le cache
+	 */
+	public function setConsignes ($_consignes) {
+		log::add("velux","debug","┌setConsignes (". json_encode($_consignes) . ")");
 		$consignes = $this->getConsignes();
 		if (!is_array($consignes)) {
-			$consignes = [];
+			$consignes = [
+				'w' => -1,
+				's' => -1
+			];
 		}
-		$consignes[$eq] = $value;
+		$needMove = false;
+		foreach ($_consignes as $eq => $value) {
+			if (($value >= 0) && ($consignes[$eq] != $_consignes[$eq])) {
+				$needMove = true;
+			}
+			$consignes[$eq] = $_consignes[$eq];
+		}
 		$this->setCache('consignes',$consignes);
-		$this->getConsignes();
+		log::add("velux","debug","└Consignes: " . json_encode($consignes));
+		if ($needMove) {
+			$this->doMove();
+		}
 	}
 
+	/*
+	 * Indique si un eq (fenêtre ou store) est en mouvement
+	 */
 	public function isMoving($eq) {
 		$cmd = $this->getCmd('info',$eq . ":state");
 		if ( $cmd->execCmd() == 2) {
@@ -333,11 +347,93 @@ class velux extends eqLogic {
 		return true;
 	}
 
+	/*
+	 * Retourne la position des eq (fenêtre et store)
+	 */
+	public function getPositions() {
+		$positions = [
+			'w' => null,
+			's' => null
+		];
+		foreach (['w', 's'] as $eq) {
+			$cmd = $this->getCmd('info',$eq . ':position');
+			if (is_object($cmd)) {
+				$positions[$eq] = $cmd->execCmd();
+			}
+		}
+		return $positions;
+	}
+
+	public function moveEq($eq, $position) {
+		$veluxCmd = $this->getCmd('action',$eq . ":target_action");
+		$eqCmd_id = str_replace('#','', $veluxCmd->getConfiguration('linkedCmd'));
+		$eqCmd = hkControlCmd::byId($eqCmd_id);
+		$this->setCache("target",$position);
+		$eqCmd->execCmd(['slider'=>$position]);
+	}
+
+	/*
+	 * Sélectionne et lance un mouvement en fonction des consignes
+	 */
 	public function doMove() {
-		if ($this->isMoving ('s') or $this->isMoning ('w')){
+		log::add("velux","info","┌doMove()");
+		if ($this->getPause()) {
+			log::add("velux","info","└" . sprintf(__('%s est en pause',__FILE__),$this->getHumanName()));
 			return;
 		}
-		$consignes = $this->getConsignes();
+		if ($this->isMoving ('s') or $this->isMoving ('w')){
+			log::debug("velux","debug","└" . __('Un équipement est en mouvement'.__FILE__));
+			return;
+		}
+		$consigne = $this->getConsignes();
+		$position = $this->getPositions();
+		log::add("velux","debug","│consignes: " . json_encode($consigne));
+		log::add("velux","debug","│positions: " . json_encode($position));
+
+		foreach (['s', 'w'] as $eq) {
+			if ($consigne[$eq] == $position[$eq]) {
+				$consigne[$eq] = -1;
+			}		
+		}
+
+		if ($consigne['s'] >= 0) {
+			if ($position['s'] == $consigne['s']) {
+				log::add("velux","info","│" . __("Pas de mouvement nécessaire pour le store.",__FILE__));
+				$this->setConsignes(['s' => -1]);
+			} else {
+				// Le fenêtre est suffisament fermée pour un mouvement libre du store
+				log::add("velux","info","└" . __("La fenêtre est fermée, on déplace le store.",__FILE__));
+				if ($position['w'] <= 7) {
+					$this->moveEq('s',$consigne['s']);
+					return;
+				}
+				// Le mouvement du store ne sera pas gêné par la fenêtre
+				if ($position['s'] > 46 and $consigne['s'] > 46) {
+					log::add("velux","info","└" . __("La fenêtre est ouverte, on peut déplacer le store dans la partie suppérieure.",__FILE__));
+					$this->moveEq('s',$consigne['s']);
+					return;
+				}
+				// La fenêtre doit être fermée pour permettre le mouvement du store dans la partie inférieure
+				log::add("velux","info","└" . __("On doit fermer la fenêtre avant de pouvoir déplacer le store dans la partie inférieure.",__FILE__));
+				$this->setCache('w_return_to_position',$position['w']);
+				$this->moveEq('w',7);
+				return;
+			}
+		} else {
+			log::add("velux","info","│" . __("Pas de mouvement requis pour le store.",__FILE__));
+		}
+
+		if ($consigne['w'] >= 0) {
+			if ($position['w'] == $consigne['w']) {
+				log::add("velux","info","└" . __("Pas de mouvement nécessaire pour la fenêtre.",__FILE__));
+				$this->setConsignes(['s' => -1]);
+			} else {
+				log::add("velux","info","└" . __("Positionnement de la fenêtre.",__FILE__));
+				$this->moveEq('w',$consigne['w']);
+			}
+		} else {
+			log::add("velux","info","└" . __("Pas de mouvement requis pour la fenêtre.",__FILE__));
+		}
 	}
 
 	/*     * **********************Getteur Setteur*************************** */
@@ -386,23 +482,50 @@ class veluxCmd extends cmd {
 
 	// Exécution d'une commande
 	public function execute($_options = array()) {
+		log::add("velux","debug","execute cmd " . $this->getHumanName());
 		$info = $this->splitEqLogicId();
 		switch ($this->getType()) {
 		case 'info':
 			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
 			break;
 		case 'action':
+			if ($this->getLogicalId() == 'refresh') {
+				$eqConfiguration = $this->getEqLogic()->getConfiguration();
+				/* Refresh de chaque equipement HK */
+				foreach ($eqConfiguration as $key => $value) {
+					if ( substr($key, -5) != ':hkId' ) {
+						continue;
+					}
+					$value = str_replace('#','', str_replace('eqLogic','',$value));
+					$eqHk = hkControl::byId($value);
+					if (is_object($eqHk)) {
+						$cmd = $eqHk->getCmd('action','refresh');
+						if (is_object($cmd)) {
+							$cmd->execute($_options);
+						}
+					}
+				}
+				/* Synchronisation des cmd de type 'info' avec la commande liée */
+				foreach ($this->getEqLogic()->getCmd('info') as $cmd) {
+					$hkCmdId = $cmd->getConfiguration('linkedCmd');
+					if ($hkCmdId == '') {
+						continue;
+					}
+					$hkCmdId = str_replace ('#','',$hkCmdId);
+					$hkCmd = $cmd->byId($hkCmdId);
+					if (is_object($hkCmd)) {
+						$value = $hkCmd->execCmd();
+						$cmd->getEqLogic()->checkAndUpdateCmd($cmd,$value);
+					}
+				}
+				return;
+			};
 			if ($info['name'] == 'target_action') {
-				$this->getEqLogic()->setConsigne($info['eq'],$_options['slider']);
-			}
-			if ($this->getConfiguration('linkedCmd') != '') {
-				
-				$cmd = cmd::byId(str_replace('#', '', $this->getConfiguration('linkedCmd')));
-				log::add("velux","info",json_encode($_options));
-				return $cmd->execcmd($_options);
+				$this->getEqLogic()->setConsignes([$info['eq'] => $_options['slider']]);
 			}
 		}
 	}
 
 	/*     * **********************Getteur Setteur*************************** */
 }
+

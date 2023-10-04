@@ -169,7 +169,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</label>
 				<div class="col-sm-6">
 				    <div class="input-group">
-				        <input id="hkWindow" class="eqLogicAttr form-control roundedLeft disabled" data-l1key="configuration" data-l2key="hkWindowId">
+				        <input id="hkWindow" class="eqLogicAttr form-control roundedLeft disabled" data-l1key="configuration" data-l2key="w:hkId">
 				    	<a id="selectWindow" class="btn btn-default input-group-addon roundedRight" title="{{Sélection d'une fenêtre}}"><i class="fas fa-list-alt"></i></a>
 				    </div>
 				</div>
@@ -180,7 +180,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</label>
 				<div class="col-sm-6">
 				    <div class="input-group">
-				        <input id="hkStore" class="eqLogicAttr form-control roundedLeft disabled" data-l1key="configuration" data-l2key="hkStoreId">
+				        <input id="hkStore" class="eqLogicAttr form-control roundedLeft disabled" data-l1key="configuration" data-l2key="s:hkId">
 				    	<a id="selectStore" class="btn btn-default input-group-addon roundedRight" title="{{Sélection d'un store}}"><i class="fas fa-list-alt"></i></a>
 				    </div>
 				</div>
@@ -210,10 +210,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			<thead>
 			    <tr>
 				<th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
-				<th style="min-width:200px;width:350px;">{{Nom}}</th>
-				<th style="width:100px">{{Type}}</th>
-				<th style="width:110px">{{LogicalId}}</th>
-				<th>{{Commande HK liée}}</th>
+				<th style="min-width:200px;width:240px;">{{Nom}}</th>
+				<th style="width:80px">{{Type}}</th>
+				<th style="width:115px">{{LogicalId}}</th>
+				<th>{{Paramètres}}</th>
 				<th style="width:260px;">{{Options}}</th>
 				<th>{{Etat}}</th>
 				<th style="min-width:80px;width:100px;">{{Actions}}</th>

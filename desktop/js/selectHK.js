@@ -20,7 +20,6 @@ $('#selectHK').on('change', function () {
 			}
 			cmds = json_decode(data.result)
 			for (logicalId of [
-				'refresh',
 				'identify',
 				'target_info',
 				'target_action',
