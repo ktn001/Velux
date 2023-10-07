@@ -164,6 +164,24 @@ $("#selectStore").off('click').on('click',function () {
     selectHK('External Cover')
 })
 
+/* Click sur le bouton d'ajout d'une commande "cible" */
+$(".cmdAction[data-action=add_target]").off('click').on('click',function () {
+  addCmdToTable({
+    type : "action",
+    subType : "other",
+    logicalId : "target"
+  })
+})
+
+/* Click sur le bouton de séction d'info pour calcul */
+$('#table_cmd tbody').on('click','.listEquipementInfo', function () {
+  var el = $(this)
+  jeedom.cmd.getSelectModal({ cmd: { type: 'info'} }, function (result) {
+    var calcul = el.closest('tr').find('.cmdAttr[data-l1key="configuration"][data-l2key="' + el.data('input') + '"]')
+    calcul.atCaret('insert', result.human)
+  })
+})
+
 /* Permet la réorganisation des commandes dans l'équipement */
 $("#table_cmd").sortable({
   axis: "y",
@@ -213,16 +231,30 @@ function addCmdToTable(_cmd) {
     tr +=   '<span class="cmdAttr hidden" data-l1key="configuration" data-l2key="returnStateValue">0</span>'
     tr += '</label>'
   }
+  if (('logicalId' in _cmd) && (_cmd.logicalId == 'target')){
+    tr += '<label style="font-weight:400;max-width:48%">{{Position fenêtre}}:' 
+    tr +=   '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="w:target"></input>'
+    tr += '</label>'
+    tr += '<label style="font-weight:400;max-width:48%; margin-left:2px">{{Position store}}:' 
+    tr +=   '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="s:target"></input>'
+    tr += '</label>'
+  }
+  if (('logicalId' in _cmd) && (_cmd.logicalId == 'rain')){
+    tr += '<textarea class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="calcul" style="height:35px" placeHolder="{{Calcul"}}></textarea>'
+    tr += '<a class="btn btn-default listEquipementInfo btn-xs" data-input="calcul" style="width:100%;margin-top:2px"><i calss="fas fa-list-alt"></i> {{Rechercher équipement}}</a>'
+  }
   tr += '</td>'
   tr += '<td>'
   tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isVisible" checked/>{{Afficher}}</label> '
-  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isHistorized" checked/>{{Historiser}}</label> '
-  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="display" data-l2key="invertBinary"/>{{Inverser}}</label> '
-  tr += '<div style="margin-top:7px;">'
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="minValue" placeholder="{{Min}}" title="{{Min}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="maxValue" placeholder="{{Max}}" title="{{Max}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="unite" placeholder="Unité" title="{{Unité}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
-  tr += '</div>'
+  if (_cmd.type == 'info') {
+    tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isHistorized" checked/>{{Historiser}}</label> '
+    tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="display" data-l2key="invertBinary"/>{{Inverser}}</label> '
+  }
+  if (['slider','numeric'].includes(_cmd.subType)) {
+    tr += '<div style="margin-top:7px;">'
+    tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="unite" placeholder="Unité" title="{{Unité}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
+    tr += '</div>'
+  }
   tr += '</td>'
   tr += '<td>';
   tr += '<span class="cmdAttr" data-l1key="htmlstate"></span>';
@@ -231,6 +263,9 @@ function addCmdToTable(_cmd) {
   if (is_numeric(_cmd.id)) {
     tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fas fa-cogs"></i></a> '
     tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> {{Tester}}</a>'
+  }
+  if (('logicalId' in _cmd) && (_cmd.logicalId == 'target')){
+    tr += '<i class="fas fa-minus-circle pull-right cmdAction cursor" data-action="remove"></i>'
   }
   tr += '</td>'
   tr += '</tr>'

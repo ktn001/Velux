@@ -26,7 +26,7 @@ class velux extends eqLogic {
 		$velux = self::byId($_option['id']);
 		$cmd =  cmd::byId($_option['event_id']);
 		log::add("velux","debug","│cmd: " . $cmd->getLogicalId());
-		
+
 		// S'agit-il d'un changement de mouvement
 		if (substr($cmd->getLogicalId(),-6) == ":state") {
 			// Arret de l'eq
@@ -53,6 +53,7 @@ class velux extends eqLogic {
 						$velux->setPause(1);
 						$velux->setCache('target',-1);
 						$velux->setConsignes(["w"=>-1, "s"=>-1]);
+						$velux->refresh();
 					} else {
 						log::add("velux","info","└" . __("OK pour prochain mouvement",__FILE__));
 						$velux->setCache('target',-1);
@@ -112,7 +113,7 @@ class velux extends eqLogic {
 		$hkCmds = $hkEq->getCmd(null, null, null, true);
 		$inConfig = config::byKey('hkCmds_' . $hkEq_id, 'velux');
 		$propositions = [];
-		
+
 		$cmds = [
 			'refresh' => [
 				'type' => 'action',
@@ -138,7 +139,7 @@ class velux extends eqLogic {
 				'type' => 'info',
 				'subType' => 'numeric',
 			]
-			
+
 		];
 		foreach ($cmds as $logicalId => $cmd) {
 			$actual = 0;
@@ -180,7 +181,7 @@ class velux extends eqLogic {
 	public function postSave() {
 		$cmdFile = __DIR__ . "/../config/cmds.json";
 		$configs = json_decode(file_get_contents($cmdFile),true);
-		$cmd = $this->getCmd(null, 'refresh');
+		$cmd = $this->getCmd('action', 'refresh');
 		if (! is_object($cmd)) {
 			$cmd = new veluxCmd();
 			$cmd->setLogicalId('refresh');
@@ -193,9 +194,21 @@ class velux extends eqLogic {
 			$cmd->save();
 		}
 
-		$cmd = $this->getCmd(null, 'pause');
+		$cmd = $this->getCmd('info', 'rain');
 		if (! is_object($cmd)) {
-			$nbCmd = count ($this->getCmd());
+			$cmd = new veluxCmd();
+			$cmd->setLogicalId('rain');
+			$cmd->setIsVisible(1);
+			$cmd->setName(__('Pluie',__FILE__));
+			$cmd->setType('info');
+			$cmd->setSubType('binary');
+			$cmd->setEqLogic_id($this->getId());
+			$cmd->setOrder(2);
+			$cmd->save();
+		}
+
+		$cmd = $this->getCmd('info', 'pause');
+		if (! is_object($cmd)) {
 			$cmd = new veluxCmd();
 			$cmd->setLogicalId('pause');
 			$cmd->setIsVisible(1);
@@ -203,9 +216,49 @@ class velux extends eqLogic {
 			$cmd->setType('info');
 			$cmd->setSubType('binary');
 			$cmd->setEqLogic_id($this->getId());
-			$cmd->setOrder($nbCmd+1);
+			$cmd->setConfiguration('returnStateTime',60);
+			$cmd->setConfiguration('returnStateValue',0);
+			$cmd->setOrder(3);
 			$cmd->save();
 		}
+
+		$cmd = $this->getCmd('action','pause_on');
+		if (! is_object($cmd)) {
+			$cmd = new veluxCmd();
+			$cmd->setLogicalId('pause_on');
+			$cmd->setIsVisible(1);
+			$cmd->setName(__('Pause ON',__FILE__));
+			$cmd->setType('action');
+			$cmd->setSubType('other');
+			$cmd->setEqLogic_id($this->getId());
+			$cmd->setTemplate('dashboard','default');
+			$cmd->setTemplate('mobile','default');
+			$cmd->setOrder(4);
+			$cmd->save();
+		}
+
+		$cmd = $this->getCmd('action','pause_off');
+		if (! is_object($cmd)) {
+			$cmd = new veluxCmd();
+			$cmd->setLogicalId('pause_off');
+			$cmd->setIsVisible(1);
+			$cmd->setName(__('Pause OFF',__FILE__));
+			$cmd->setType('action');
+			$cmd->setSubType('other');
+			$cmd->setEqLogic_id($this->getId());
+			$cmd->setTemplate('dashboard','default');
+			$cmd->setTemplate('mobile','default');
+			$cmd->setOrder(5);
+			$cmd->save();
+		}
+
+		$cmd_pause = $this->getCmd('info', 'pause');
+		$cmd_pause_on = $this->getCmd('action', 'pause_on');
+		$cmd_pause_on->setValue($cmd_pause->getId());
+		$cmd_pause_on->save();
+		$cmd_pause_off = $this->getCmd('action', 'pause_off');
+		$cmd_pause_off->setValue($cmd_pause->getId());
+		$cmd_pause_off->save();
 
 		$this->setListener();
 	}
@@ -382,7 +435,7 @@ class velux extends eqLogic {
 			return;
 		}
 		if ($this->isMoving ('s') or $this->isMoving ('w')){
-			log::debug("velux","debug","└" . __('Un équipement est en mouvement'.__FILE__));
+			log::add("velux","debug","└" . __('Un équipement est en mouvement'.__FILE__));
 			return;
 		}
 		$consigne = $this->getConsignes();
@@ -393,7 +446,7 @@ class velux extends eqLogic {
 		foreach (['s', 'w'] as $eq) {
 			if ($consigne[$eq] == $position[$eq]) {
 				$consigne[$eq] = -1;
-			}		
+			}
 		}
 
 		if ($consigne['s'] >= 0) {
@@ -453,17 +506,38 @@ class veluxCmd extends cmd {
 
 	/*
 	* Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
-	*/
 	public function dontRemoveCmd() {
 		return true;
 	}
+	*/
 
 	public function preSave() {
 		if ($this->getType() == 'info') {
-			$value = $this->getConfiguration('linkedCmd');
-			if ($value != '') {
-				$this->setValue($value);
+			$string = $this->getConfiguration('linkedCmd') . $this->getConfiguration('calcul');
+			preg_match_all("/#([0-9]+)#/", $string, $matches);
+			$added_value = [];
+			$value = '';
+			foreach ($matches[1] as $cmd_id) {
+				if (is_numeric($cmd_id)) {
+					$cmd = self::byId($cmd_id);
+					if (is_object($cmd) && $cmd->getType() == 'info') {
+						if (isset($added_value[$cmd_id])){
+							continue;
+						}
+						$value .= '#' . $cmd_id . '#';
+						$added_value[$cmd_id] = $cmd_id;
+					}
+				}
 			}
+			preg_match_all("/variable\((.+?)\)/", $calcul, $matches);
+			foreach ($matches[1] as $variable) {
+				if(isset($added_value['#variable(' . $variable . ')#'])){
+					continue;
+				}
+				$value .= '#variable(' . $variable . ')#';
+				$added_value['#variable(' . $variable . ')#'] = '#variable(' . $variable . ')#';
+			}
+			$this->setValue($value);
 		}
 	}
 
@@ -486,6 +560,13 @@ class veluxCmd extends cmd {
 		$info = $this->splitEqLogicId();
 		switch ($this->getType()) {
 		case 'info':
+			if ($this->getLogicalId() == 'rain') {
+				$result = jeedom::evaluateExpression($this->getConfiguration('calcul'));
+				if (is_string($result)){
+					$result = str_replace('"', '', $result);
+				}
+				return $result;
+			}
 			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
 			break;
 		case 'action':
@@ -520,8 +601,30 @@ class veluxCmd extends cmd {
 				}
 				return;
 			};
+			if ($this->getLogicalId() == 'pause_on') {
+				$this->getEqLogic()->setPause(1);
+				return;
+			}
+			if ($this->getLogicalId() == 'pause_off') {
+				$this->getEqLogic()->setPause(0);
+				$this->getEqLogic()->refresh();
+				return;
+			}
 			if ($info['name'] == 'target_action') {
 				$this->getEqLogic()->setConsignes([$info['eq'] => $_options['slider']]);
+				return;
+			}
+			if ($this->getLogicalId() == 'target') {
+				$target = [];
+				foreach (['w','s'] as $eq) {
+					$pos = $this->getConfiguration($eq . ':target');
+					if ($pos !== '') {
+						$target[$eq] = $pos;
+					}
+				}
+				$this->getEqLogic()->setConsignes($target);
+				$this->getEqLogic()->doMove();
+				return;
 			}
 		}
 	}

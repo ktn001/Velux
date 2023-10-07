@@ -204,6 +204,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
 	    <!-- Onglet des commandes de l'équipement -->
 	    <div role="tabpanel" class="tab-pane" id="commandtab">
+		<a class="btn btn-default btn-sm pull-right cmdAction" data-action="add_target" style="margin-top:5px;">
+			<i class="fas fa-plus-circle"></i>
+			{{Ajouter une commande "cible"}}
+		</a>
+		<br>
 		<br>
 		<div class="table-responsive">
 		    <table id="table_cmd" class="table table-bordered table-condensed">
@@ -216,7 +221,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<th>{{Paramètres}}</th>
 				<th style="width:260px;">{{Options}}</th>
 				<th>{{Etat}}</th>
-				<th style="min-width:80px;width:100px;">{{Actions}}</th>
+				<th style="min-width:80px;width:130px;">{{Actions}}</th>
 			    </tr>
 			</thead>
 			<tbody>

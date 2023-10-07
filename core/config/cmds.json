@@ -13,8 +13,12 @@
 		"subType": "numeric",
 		"name": "{{Fenêtre, position cible (info)}}",
 		"isVisible": "0",
+		"unite": "%",
 		"configuration": {
 			"order": "2"
+		},
+		"display" : {
+			"forceReturnLineBefore": "1"
 		}
 	},
 	"w:target_action": {
@@ -23,6 +27,7 @@
 		"name": "{{Fenêtre, position cible (action)}}",
 		"isVisible": "1",
 		"value" : "w:target_info",
+		"unite": "%",
 		"configuration": {
 			"order": "3"
 		}
@@ -32,6 +37,7 @@
 		"subType": "numeric",
 		"name": "{{Position fenêtre}}",
 		"isVisible": "1",
+		"unite": "%",
 		"configuration": {
 			"order": "4"
 		}
@@ -59,8 +65,12 @@
 		"subType": "numeric",
 		"name": "{{Store, position cible (info)}}",
 		"isVisible": "0",
+		"unite": "%",
 		"configuration": {
 			"order": "7"
+		},
+		"display" : {
+			"forceReturnLineBefore": "1"
 		}
 	},
 	"s:target_action": {
@@ -69,6 +79,7 @@
 		"name": "{{Store, position cible (action)}}",
 		"isVisible": "1",
 		"value" : "s:target_info",
+		"unite": "%",
 		"configuration": {
 			"order": "8"
 		}
@@ -78,6 +89,7 @@
 		"subType": "numeric",
 		"name": "{{Position store}}",
 		"isVisible": "1",
+		"unite": "%",
 		"configuration": {
 			"order": "9"
 		}
