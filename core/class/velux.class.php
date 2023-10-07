@@ -68,6 +68,27 @@ class velux extends eqLogic {
 		}
 	}
 
+	public static function deadCmd() {
+		$return = array();
+		foreach (eqLogic::byType('velux') as $velux) {
+			foreach ($velux->getCmd() as $cmd) {
+				preg_match_all("/#([0-9]+?)#/", $cmd->getConfiguration('linkedCmd'), $matches);
+				foreach ($matches[1] as $cmd_id) {
+					if (!cmd::byId(str_replace('#', '', $cmd_id))) {
+						$return[] = array('detail' => sprintf(__('%s dans la commande "%s"',__FILE__), $velux->getHumanName(), $cmd->getName()), 'help' => __('Commande liée',__FILE__), 'who' => '#' . $cmd_id . '#');
+					}
+				}
+				preg_match_all("/#([0-9]+?)#/", $cmd->getConfiguration('calcul'), $matches);
+				foreach ($matches[1] as $cmd_id) {
+					if (!cmd::byId(str_replace('#', '', $cmd_id))) {
+						$return[] = array('detail' => sprintf(__('%s dans la commande "%s"',__FILE__), $velux->getHumanName(), $cmd->getName()), 'help' => __('Calcul',__FILE__), 'who' => '#' . $cmd_id . '#');
+					}
+				}
+			}
+		}
+		return $return;
+	}
+
 	/*
 	 * Retourne une liste des équipements Velux (fenêtre ou store) configurés
 	 * dans le plugin hkControl (homekit)
@@ -587,17 +608,19 @@ class veluxCmd extends cmd {
 					}
 				}
 				/* Synchronisation des cmd de type 'info' avec la commande liée */
-				foreach ($this->getEqLogic()->getCmd('info') as $cmd) {
-					$hkCmdId = $cmd->getConfiguration('linkedCmd');
-					if ($hkCmdId == '') {
-						continue;
+				try {
+					foreach ($this->getEqLogic()->getCmd('info') as $cmd) {
+						if ($cmd->getConfiguration('calcul') == '' && $cmd->getConfiguration('linkedCmd') == '') {
+							continue;
+						}
+						$value = $cmd->execute();
+						if ($cmd->execCmd() != $cmd->formatValue($value)) {
+							$cmd->event($value);
+						}
 					}
-					$hkCmdId = str_replace ('#','',$hkCmdId);
-					$hkCmd = $cmd->byId($hkCmdId);
-					if (is_object($hkCmd)) {
-						$value = $hkCmd->execCmd();
-						$cmd->getEqLogic()->checkAndUpdateCmd($cmd,$value);
-					}
+
+				} catch (Exception $exc) {
+					log::add('velux','error',__('Erreur pour',__FILE__) . ' ' . $this->getEqLogic()->getHumanName() . ' : ' . $exc->getMessage());
 				}
 				return;
 			};
