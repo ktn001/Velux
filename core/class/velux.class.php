@@ -197,6 +197,18 @@ class velux extends eqLogic {
 	}
 
 	/*
+	 * Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
+	 */
+	public function preSave() {
+		if ($this->getConfiguration('windowsLimit') == '') {
+			$this->setConfiguration('windowsLimit',7);
+		}
+		if ($this->getConfiguration('shuttersLimit') == '') {
+			$this->setConfiguration('shuttersLimit',55);
+		}
+	}
+
+	/*
 	 * Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
 	 */
 	public function postSave() {
@@ -550,7 +562,7 @@ class veluxCmd extends cmd {
 					}
 				}
 			}
-			preg_match_all("/variable\((.+?)\)/", $calcul, $matches);
+			preg_match_all("/variable\((.+?)\)/", $string, $matches);
 			foreach ($matches[1] as $variable) {
 				if(isset($added_value['#variable(' . $variable . ')#'])){
 					continue;

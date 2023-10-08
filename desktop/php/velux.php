@@ -185,6 +185,23 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				    </div>
 				</div>
 			    </div>
+			    <legend><i class="fas fa-cogs"></i> {{Positions limites}}</legend>
+			    <div class="form-group">
+				<label class="col-sm-4 control-label">{{Fenêtre}}
+				    <sup><i class="fas fa-question-circle tooltips" title="{{Position de la fenêtre au delà de laquelle le volet roulant<br>ne peux pas être actionné dans la partie inférieure.}}"></i></sup>
+				</label>
+				<div class="col-sm-6">
+				    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="windowsLimit" placeHolder="7">
+				</div>
+			    </div>
+			    <div class="form-group">
+				<label class="col-sm-4 control-label">{{Fenêtre}}
+				    <sup><i class="fas fa-question-circle tooltips" title="{{Position de la fenêtre au delà de laquelle le volet roulant<br>ne peux pas être actionné dans la partie inférieure.}}"></i></sup>
+				</label>
+				<div class="col-sm-6">
+				    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="shuttersLimit" placeHolder="55">
+				</div>
+			    </div>
 			</div>
 
 			<!-- Partie droite de l'onglet "Équipement" -->
