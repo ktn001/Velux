@@ -488,13 +488,13 @@ class velux extends eqLogic {
 				$this->setConsignes(['s' => -1]);
 			} else {
 				// Le fenêtre est suffisament fermée pour un mouvement libre du store
-				log::add("velux","info","└" . __("La fenêtre est fermée, on déplace le store.",__FILE__));
-				if ($position['w'] <= 7) {
+				if ($position['w'] <= $this->getConfiguration('windowsLimit')) {
+					log::add("velux","info","└" . __("La fenêtre est fermée, on déplace le store.",__FILE__));
 					$this->moveEq('s',$consigne['s']);
 					return;
 				}
 				// Le mouvement du store ne sera pas gêné par la fenêtre
-				if ($position['s'] > 46 and $consigne['s'] > 46) {
+				if ($position['s'] > $this->getConfiguration('shuttersLimit') and $consigne['s'] > $this->getConfiguration('shuttersLimit')) {
 					log::add("velux","info","└" . __("La fenêtre est ouverte, on peut déplacer le store dans la partie suppérieure.",__FILE__));
 					$this->moveEq('s',$consigne['s']);
 					return;
@@ -502,7 +502,7 @@ class velux extends eqLogic {
 				// La fenêtre doit être fermée pour permettre le mouvement du store dans la partie inférieure
 				log::add("velux","info","└" . __("On doit fermer la fenêtre avant de pouvoir déplacer le store dans la partie inférieure.",__FILE__));
 				$this->setCache('w_return_to_position',$position['w']);
-				$this->moveEq('w',7);
+				$this->moveEq('w',$this->getConfiguration('windowsLimit'));
 				return;
 			}
 		} else {
