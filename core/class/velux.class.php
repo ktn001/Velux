@@ -206,6 +206,15 @@ class velux extends eqLogic {
 		if ($this->getConfiguration('shuttersLimit') == '') {
 			$this->setConfiguration('shuttersLimit',55);
 		}
+		$limit = $this->getConfiguration('windowsLimit');
+		if (!(ctype_digit($limit)) or ($limit < 0) or ($limit > 100)) {
+			throw new Exception(__("La position limite de la fenêtre doit être un entier compris en 0 et 100.",__FILE__));
+		}
+		$limit = $this->getConfiguration('shuttersLimit');
+		if (!(ctype_digit($limit)) or ($limit < 0) or ($limit > 100)) {
+			throw new Exception(__("La position limite du volet roulant doit être un entier compris en 0 et 100.",__FILE__));
+		}
+		
 	}
 
 	/*
@@ -598,6 +607,16 @@ class veluxCmd extends cmd {
 				if (is_string($result)){
 					$result = str_replace('"', '', $result);
 				}
+				if ($result == 1) {
+					$velux = $this->getEqLogic();
+					$position = $velux->getPositions()['w'];
+					if ($position > $velux->getConfiguration('windowsLimit')) {
+						$cmdWindows = $velux->getCmd('action','w:target_action');
+						if (is_object($cmdWindows)) {
+							$cmdWindows->execCmd(["slider" => 7]);
+						}
+					}
+				}
 				return $result;
 			}
 			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
@@ -648,6 +667,13 @@ class veluxCmd extends cmd {
 			if ($info['name'] == 'target_action') {
 				$this->getEqLogic()->setConsignes([$info['eq'] => $_options['slider']]);
 				return;
+			}
+			if ($info['name'] == 'identify') {
+				$cmd_id = str_replace("#","",$this->getConfiguration('linkedCmd'));
+				$cmd = cmd::byId($cmd_id);
+				if (is_object($cmd)) {
+					$cmd->execCmd();
+				}
 			}
 			if ($this->getLogicalId() == 'target') {
 				$target = [];
