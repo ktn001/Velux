@@ -192,6 +192,36 @@ $("#table_cmd").sortable({
   forcePlaceholderSize: true
 })
 
+function saveEqLogic(_eqLogic) {
+	error = false
+	field = $('.eqLogicAttr[data-l1key="configuration"][data-l2key="windowsLimit"]')
+	value = field.val()
+	if (isNaN(value) || (value < 0) || (value > 100)){
+		field.style("background-color", "red", "important")
+		message = "{{La Limite de la fenêtre doit être un entier compris entre 0 et 100}}"
+		$.fn.showAlert({message: message, level: 'danger'})
+		error = true
+	} else {
+		field.style("background-color", "")
+	}
+	field = $('.eqLogicAttr[data-l1key="configuration"][data-l2key="shuttersLimit"]')
+	value = field.val()
+	if (isNaN(value) || (value < 0) || (value > 100)){
+		field.style("background-color", "red", "important")
+		message = "{{La Limite du volet roulant doit être un entier compris entre 0 et 100}}"
+		$.fn.showAlert({message: message, level: 'danger'})
+		error = true
+	} else {
+		field.style("background-color", "")
+	}
+	if (error) {
+		//throw new Error (message)
+		$('a[href="#eqlogictab"]').click()
+		throw new Error ("{{Erreur dans les valeurs de configuration saisies}}")
+	}
+	return _eqLogic
+}
+
 /* Fonction permettant l'affichage des commandes dans l'équipement */
 function addCmdToTable(_cmd) {
   if (!isset(_cmd)) {
