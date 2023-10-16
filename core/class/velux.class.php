@@ -22,33 +22,33 @@ class velux extends eqLogic {
 	 * ou arrêt) de la fenêtre ou du store
 	 */
 	public static function listenerHandler($_option) {
-		log::add("velux","info","┌listenerHandler: " . json_encode($_option));
-		$velux = self::byId($_option['id']);
-		$cmd =  cmd::byId($_option['event_id']);
-		log::add("velux","debug","│cmd: " . $cmd->getLogicalId());
-
 		// S'agit-il d'un changement de mouvement
+		$cmd =  cmd::byId($_option['event_id']);
 		if (substr($cmd->getLogicalId(),-6) == ":state") {
+
 			// Arret de l'eq
 			if ($_option['value'] == 2) {
+				log::add("velux","info","┌listenerHandler: " . json_encode($_option));
+				$velux = self::byId($_option['id']);
+				log::add("velux","debug","│cmd: " . $cmd->getLogicalId());
+				$velux->refresh();
+				sleep(1);
 				$target = $velux->getCache('target');
+				$positions = $velux->getPositions();
+				$consignes = $velux->getConsignes();
+				$logicalId = $cmd->getLogicalId();
+				$eq = substr($logicalId,0,strpos($logicalId,":"));
+				log::add("velux","debug","│eq: " . $eq);
+				log::add("velux","debug","│consigne: " . $consignes[$eq]);
+				log::add("velux","debug","│position: " . $positions[$eq]);
+				log::add("velux","debug","│target: " . $target);
 				if ($target < 0) {
 					// Le dernier mouvement n'a pas été provoqué par Jeedom
 					log::add("velux","info","└" . __("Le mouvement n'a pas été lancé par le plugin, mise en pause du velux.",__FILE__));
 					$velux->setPause(1);
 					$velux->setConsignes(["w"=>-1, "s"=>-1]);
 				} else {
-					//$velux->refresh();
-					sleep(1);
-					$positions = $velux->getPositions();
-					$consignes = $velux->getConsignes();
-					$logicalId = $cmd->getLogicalId();
-					$eq = substr($logicalId,0,strpos($logicalId,":"));
-					log::add("velux","debug","│eq: " . $eq);
-					log::add("velux","debug","│consigne: " . $consignes[$eq]);
-					log::add("velux","debug","│position: " . $positions[$eq]);
-					log::add("velux","debug","│target: " . $target);
-					if (($positions[$eq] != $consignes[$eq]) and ($positions[$eq] != $velux->getCache('target'))) {
+					if (($positions[$eq] != $consignes[$eq]) and ($positions[$eq] != $target)) {
 						log::add("velux","info","└" . __("L'équipement a été arrêté avant d'atteindre la position cible, mise en pause du velux.",__FILE__));
 						$velux->setPause(1);
 						$velux->setCache('target',-1);
@@ -61,10 +61,8 @@ class velux extends eqLogic {
 					}
 				}
 			} else {
-				log::add("velux","info","└NOOP");
+				log::add("velux","info","─listenerHandler: " . json_encode($_option));
 			}
-		} else {
-			log::add("velux","error","└" . sprintf(__("Le gestionnaire de listener a été appelé pour la commande %s (%s)",__FILE),$cmd->getHumanName(), $cmd->getLogicalid()));
 		}
 	}
 
@@ -201,10 +199,10 @@ class velux extends eqLogic {
 	 */
 	public function preSave() {
 		if ($this->getConfiguration('windowsLimit') == '') {
-			$this->setConfiguration('windowsLimit',7);
+			$this->setConfiguration('windowsLimit',"7");
 		}
 		if ($this->getConfiguration('shuttersLimit') == '') {
-			$this->setConfiguration('shuttersLimit',55);
+			$this->setConfiguration('shuttersLimit',"55");
 		}
 		$limit = $this->getConfiguration('windowsLimit');
 		if (!(ctype_digit($limit)) or ($limit < 0) or ($limit > 100)) {
@@ -214,7 +212,7 @@ class velux extends eqLogic {
 		if (!(ctype_digit($limit)) or ($limit < 0) or ($limit > 100)) {
 			throw new Exception(__("La position limite du volet roulant doit être un entier compris en 0 et 100.",__FILE__));
 		}
-		
+
 	}
 
 	/*
@@ -236,19 +234,6 @@ class velux extends eqLogic {
 			$cmd->save();
 		}
 
-		$cmd = $this->getCmd('info', 'rain');
-		if (! is_object($cmd)) {
-			$cmd = new veluxCmd();
-			$cmd->setLogicalId('rain');
-			$cmd->setIsVisible(1);
-			$cmd->setName(__('Pluie',__FILE__));
-			$cmd->setType('info');
-			$cmd->setSubType('binary');
-			$cmd->setEqLogic_id($this->getId());
-			$cmd->setOrder(2);
-			$cmd->save();
-		}
-
 		$cmd = $this->getCmd('info', 'pause');
 		if (! is_object($cmd)) {
 			$cmd = new veluxCmd();
@@ -260,7 +245,7 @@ class velux extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->setConfiguration('returnStateTime',60);
 			$cmd->setConfiguration('returnStateValue',0);
-			$cmd->setOrder(3);
+			$cmd->setOrder(2);
 			$cmd->save();
 		}
 
@@ -275,7 +260,7 @@ class velux extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->setTemplate('dashboard','default');
 			$cmd->setTemplate('mobile','default');
-			$cmd->setOrder(4);
+			$cmd->setOrder(3);
 			$cmd->save();
 		}
 
@@ -290,6 +275,19 @@ class velux extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->setTemplate('dashboard','default');
 			$cmd->setTemplate('mobile','default');
+			$cmd->setOrder(4);
+			$cmd->save();
+		}
+
+		$cmd = $this->getCmd('info', 'rain');
+		if (! is_object($cmd)) {
+			$cmd = new veluxCmd();
+			$cmd->setLogicalId('rain');
+			$cmd->setIsVisible(1);
+			$cmd->setName(__('Pluie',__FILE__));
+			$cmd->setType('info');
+			$cmd->setSubType('binary');
+			$cmd->setEqLogic_id($this->getId());
 			$cmd->setOrder(5);
 			$cmd->save();
 		}
@@ -395,6 +393,10 @@ class velux extends eqLogic {
 		return ($cmd->execCmd() == 1);
 	}
 
+	public function isRaining() {
+		return $this->getCmd('info','rain')->execCmd() == 1;
+	}
+
 	/*
 	 * Retoune les consignes de position qui ont été enregistrées dans le
 	 * cache de l'équipement
@@ -417,29 +419,31 @@ class velux extends eqLogic {
 				's' => -1
 			];
 		}
-		$needMove = false;
 		foreach ($_consignes as $eq => $value) {
-			if (($value >= 0) && ($consignes[$eq] != $_consignes[$eq])) {
-				$needMove = true;
-			}
 			$consignes[$eq] = $_consignes[$eq];
 		}
 		$this->setCache('consignes',$consignes);
 		log::add("velux","debug","└Consignes: " . json_encode($consignes));
-		if ($needMove) {
-			$this->doMove();
-		}
 	}
 
 	/*
 	 * Indique si un eq (fenêtre ou store) est en mouvement
 	 */
-	public function isMoving($eq) {
-		$cmd = $this->getCmd('info',$eq . ":state");
-		if ( $cmd->execCmd() == 2) {
-			return false;
+	public function isMoving($_eq = null) {
+		if ($_eq == null) {
+			$eqs = array('w','s');
+		} elseif (is_array($_eq)) {
+			$eqs = $_eq;
+		} else {
+			$eqs = array($_eq);
 		}
-		return true;
+		foreach ($eqs as $eq) {
+			$cmd = $this->getCmd('info',$eq . ":state");
+			if ( $cmd->execCmd() != 2) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/*
@@ -474,10 +478,6 @@ class velux extends eqLogic {
 		log::add("velux","info","┌doMove()");
 		if ($this->getPause()) {
 			log::add("velux","info","└" . sprintf(__('%s est en pause',__FILE__),$this->getHumanName()));
-			return;
-		}
-		if ($this->isMoving ('s') or $this->isMoving ('w')){
-			log::add("velux","debug","└" . __('Un équipement est en mouvement'.__FILE__));
 			return;
 		}
 		$consigne = $this->getConsignes();
@@ -609,11 +609,17 @@ class veluxCmd extends cmd {
 				}
 				if ($result == 1) {
 					$velux = $this->getEqLogic();
-					$position = $velux->getPositions()['w'];
-					if ($position > $velux->getConfiguration('windowsLimit')) {
-						$cmdWindows = $velux->getCmd('action','w:target_action');
-						if (is_object($cmdWindows)) {
-							$cmdWindows->execCmd(["slider" => 7]);
+					if ($velux->isMoving()) {
+						if ( $velux->getConsignes()['w'] > $velux->getConfiguration('windowsLimit')) {
+							$velux->setConsignes(['w' => $velux->getConfiguration('windowsLimit')]);
+						}
+					} else {
+						$position = $velux->getPositions()['w'];
+						if ($position > $velux->getConfiguration('windowsLimit')) {
+							$cmdWindows = $velux->getCmd('action','w:target_action');
+							if (is_object($cmdWindows)) {
+								$cmdWindows->execCmd(["slider" => 7]);
+							}
 						}
 					}
 				}
@@ -657,6 +663,7 @@ class veluxCmd extends cmd {
 			};
 			if ($this->getLogicalId() == 'pause_on') {
 				$this->getEqLogic()->setPause(1);
+				$this->getEqLogic()->setCache('consignes','');
 				return;
 			}
 			if ($this->getLogicalId() == 'pause_off') {
@@ -665,7 +672,17 @@ class veluxCmd extends cmd {
 				return;
 			}
 			if ($info['name'] == 'target_action') {
-				$this->getEqLogic()->setConsignes([$info['eq'] => $_options['slider']]);
+				$eqLogic = $this->getEqLogic();
+
+				// Limitation de l'ouverture de la fenêtre en cas de pluie
+				if ($info['eq'] == 'w') {
+					if ($eqLogic->isRaining() and ($_options['slider'] > $eqLogic->getConfiguration('windowsLimit'))) {
+						$_options['slider'] = $eqLogic->getConfiguration('windowsLimit');
+					}
+				}
+
+				$eqLogic->setConsignes([$info['eq'] => $_options['slider']]);
+				$eqLogic->doMove();
 				return;
 			}
 			if ($info['name'] == 'identify') {
