@@ -175,19 +175,19 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</div>
 			    </div>
 			    <div class="form-group">
-				<label class="col-sm-4 control-label">{{Store}}
-				    <sup><i class="fas fa-question-circle tooltips" title="{{Store du plugin Homekit}}"></i></sup>
+				<label class="col-sm-4 control-label">{{Volet roulant}}
+				    <sup><i class="fas fa-question-circle tooltips" title="{{Volet roulant du plugin Homekit}}"></i></sup>
 				</label>
 				<div class="col-sm-6">
 				    <div class="input-group">
 				        <input id="hkStore" class="eqLogicAttr form-control roundedLeft disabled" data-l1key="configuration" data-l2key="s:hkId">
-				    	<a id="selectStore" class="btn btn-default input-group-addon roundedRight" title="{{Sélection d'un store}}"><i class="fas fa-list-alt"></i></a>
+				    	<a id="selectStore" class="btn btn-default input-group-addon roundedRight" title="{{Sélection d'un volet roulant}}"><i class="fas fa-list-alt"></i></a>
 				    </div>
 				</div>
 			    </div>
 			    <legend><i class="fas fa-cogs"></i> {{Positions limites}}</legend>
 			    <div class="form-group">
-				<label class="col-sm-4 control-label">{{Fenêtre}}
+				<label class="col-sm-4 control-label">{{Position ventilation}}
 				    <sup><i class="fas fa-question-circle tooltips" title="{{Position de la fenêtre au delà de laquelle le volet roulant<br>ne peux pas être actionné dans la partie inférieure.}}"></i></sup>
 				</label>
 				<div class="col-sm-6">
@@ -195,8 +195,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</div>
 			    </div>
 			    <div class="form-group">
-				<label class="col-sm-4 control-label">{{Fenêtre}}
-				    <sup><i class="fas fa-question-circle tooltips" title="{{Position de la fenêtre au delà de laquelle le volet roulant<br>ne peux pas être actionné dans la partie inférieure.}}"></i></sup>
+				<label class="col-sm-4 control-label">{{Limite Volet Roulant}}
+				    <sup><i class="fas fa-question-circle tooltips" title="{{Limite de mouvement du volet roulant<br>losrque la fenêtre est ouverte.}}"></i></sup>
 				</label>
 				<div class="col-sm-6">
 				    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="shuttersLimit" placeHolder="55">
