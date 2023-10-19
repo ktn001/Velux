@@ -330,4 +330,7 @@ function addCmdToTable(_cmd) {
     var tr = $('#table_cmd tbody tr').last()
   }
   tr.setValues(_cmd, '.cmdAttr')
+  setTimeout(function() {
+    tr.find('.cmdAttr').trigger('change')
+  },100)
 }

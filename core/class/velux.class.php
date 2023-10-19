@@ -604,25 +604,36 @@ class veluxCmd extends cmd {
 		case 'info':
 			if ($this->getLogicalId() == 'rain') {
 				$result = jeedom::evaluateExpression($this->getConfiguration('calcul'));
-				if (is_string($result)){
-					$result = str_replace('"', '', $result);
-				}
-				if ($result == 1) {
-					$velux = $this->getEqLogic();
-					if ($velux->isMoving()) {
-						if ( $velux->getConsignes()['w'] > $velux->getConfiguration('windowsLimit')) {
-							$velux->setConsignes(['w' => $velux->getConfiguration('windowsLimit')]);
-						}
+				if (is_numeric($result)) {
+					if ($result != 0) {
+						$result = 1;
 					} else {
-						$position = $velux->getPositions()['w'];
-						if ($position > $velux->getConfiguration('windowsLimit')) {
-							$cmdWindows = $velux->getCmd('action','w:target_action');
-							if (is_object($cmdWindows)) {
-								$cmdWindows->execCmd(["slider" => 7]);
-							}
-						}
+						$result = 0;
 					}
+				} elseif (is_string($result)){
+					$result = str_replace('"', '', $result);
+					$result = $result == '0' ? 0 : 1;
+				} elseif (is_bool($result)) { 
+					$result = $result ? 1 : 0;
+				} else {
+					$result = 1;
 				}
+				// if ($result == 1) {
+				// 	$velux = $this->getEqLogic();
+				// 	if ($velux->isMoving()) {
+				// 		if ( $velux->getConsignes()['w'] > $velux->getConfiguration('windowsLimit')) {
+				// 			$velux->setConsignes(['w' => $velux->getConfiguration('windowsLimit')]);
+				// 		}
+				// 	} else {
+				// 		$position = $velux->getPositions()['w'];
+				// 		if ($position > $velux->getConfiguration('windowsLimit')) {
+				// 			$cmdWindows = $velux->getCmd('action','w:target_action');
+				// 			if (is_object($cmdWindows)) {
+				// 				$cmdWindows->execCmd(["slider" => 7]);
+				// 			}
+				// 		}
+				// 	}
+				// }
 				return $result;
 			}
 			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
