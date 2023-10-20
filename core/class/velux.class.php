@@ -341,6 +341,7 @@ class velux extends eqLogic {
 			}
 		}
 		$this->setListener();
+		$this->refresh();
 	}
 
 	/*
@@ -554,6 +555,9 @@ class veluxCmd extends cmd {
 	*/
 
 	public function preSave() {
+		if (substr($this->getLogicalId(),-12) == ':target_info'){
+			$this->setConfiguration('repeatEventManagement','always');
+		}
 		if ($this->getType() == 'info') {
 			$string = $this->getConfiguration('linkedCmd') . $this->getConfiguration('calcul');
 			preg_match_all("/#([0-9]+)#/", $string, $matches);
@@ -603,6 +607,7 @@ class veluxCmd extends cmd {
 		switch ($this->getType()) {
 		case 'info':
 			if ($this->getLogicalId() == 'rain') {
+				$eqLogic = $this->getEqLogic();
 				$result = jeedom::evaluateExpression($this->getConfiguration('calcul'));
 				if (is_numeric($result)) {
 					if ($result != 0) {
@@ -618,22 +623,23 @@ class veluxCmd extends cmd {
 				} else {
 					$result = 1;
 				}
-				// if ($result == 1) {
-				// 	$velux = $this->getEqLogic();
-				// 	if ($velux->isMoving()) {
-				// 		if ( $velux->getConsignes()['w'] > $velux->getConfiguration('windowsLimit')) {
-				// 			$velux->setConsignes(['w' => $velux->getConfiguration('windowsLimit')]);
-				// 		}
-				// 	} else {
-				// 		$position = $velux->getPositions()['w'];
-				// 		if ($position > $velux->getConfiguration('windowsLimit')) {
-				// 			$cmdWindows = $velux->getCmd('action','w:target_action');
-				// 			if (is_object($cmdWindows)) {
-				// 				$cmdWindows->execCmd(["slider" => 7]);
-				// 			}
-				// 		}
-				// 	}
-				// }
+				if ($result == 1) {
+					$wPosLimit = $eqLogic->getConfiguration('windowsLimit');
+					$need2Close = false;
+					if ($eqLogic->getPositions()['w'] > $wPosLimit) {
+						$need2Close = true;
+					} elseif ($eqLogic->getConsignes()['w'] > $wPosLimit) {
+						$need2Close = true;
+					}
+					if ($need2Close) {
+						$cmd = $eqLogic->getCmd('action','w:target_action');
+						if (is_object($cmd)){
+							$_options['slider'] = $wPosLimit;
+							$cmd->execute($_options);
+						}
+					}
+
+				}
 				return $result;
 			}
 			return jeedom::evaluateExpression($this->getConfiguration('linkedCmd'));
@@ -674,7 +680,7 @@ class veluxCmd extends cmd {
 			};
 			if ($this->getLogicalId() == 'pause_on') {
 				$this->getEqLogic()->setPause(1);
-				$this->getEqLogic()->setCache('consignes','');
+				$this->getEqLogic()->setConsignes(['s'=>-1,'w'=>-1]);
 				return;
 			}
 			if ($this->getLogicalId() == 'pause_off') {
@@ -687,8 +693,13 @@ class veluxCmd extends cmd {
 
 				// Limitation de l'ouverture de la fenêtre en cas de pluie
 				if ($info['eq'] == 'w') {
-					if ($eqLogic->isRaining() and ($_options['slider'] > $eqLogic->getConfiguration('windowsLimit'))) {
-						$_options['slider'] = $eqLogic->getConfiguration('windowsLimit');
+					$wPosLimit = $eqLogic->getConfiguration('windowsLimit');
+					if ($eqLogic->isRaining() and ($_options['slider'] > $wPosLimit)) {
+						$_options['slider'] = $wPosLimit;
+						$cmd = $eqLogic->getCmd('info','w:target_info');
+						if (is_object($cmd)) {
+							$cmd->event($wPosLimit);
+						}
 					}
 				}
 
@@ -704,15 +715,18 @@ class veluxCmd extends cmd {
 				}
 			}
 			if ($this->getLogicalId() == 'target') {
+				$eqLogic = $this->getEqLogic();
 				$target = [];
-				foreach (['w','s'] as $eq) {
+				foreach (['s','w'] as $eq) {
 					$pos = $this->getConfiguration($eq . ':target');
 					if ($pos !== '') {
-						$target[$eq] = $pos;
+						$cmd = $eqLogic->getCmd('action',$eq . ':target_action');
+						if (is_object($cmd)){
+							$_options['slider'] = $pos;
+							$cmd->execute($_options);
+						}
 					}
 				}
-				$this->getEqLogic()->setConsignes($target);
-				$this->getEqLogic()->doMove();
 				return;
 			}
 		}
