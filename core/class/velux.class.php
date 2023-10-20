@@ -341,7 +341,9 @@ class velux extends eqLogic {
 			}
 		}
 		$this->setListener();
-		$this->refresh();
+		if ($this->getIsEnable() == 1) {
+			$this->refresh();
+		}
 	}
 
 	/*
@@ -382,7 +384,10 @@ class velux extends eqLogic {
 	}
 
 	public function refresh() {
-		$cmd = $this->getCmd('action','refresh')->execCmd();
+		$cmd = $this->getCmd('action','refresh');
+		if (is_object($cmd)) {
+			$cmd->execCmd();
+		}
 	}
 
 	public function setPause ($pause) {
