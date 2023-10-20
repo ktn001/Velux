@@ -2,7 +2,7 @@
 	"id" : "velux",
 	"name" : "Velux",
 	"description" : {
-		"fr_FR": "Template servant de base à la création de plugins pour Jeedom"
+		"fr_FR": "Plugin permettant de coordonner les mouvements d'une fenêtre et d'un volet roulant Velux<BR>Attention ce plugin nécessite le plugin hkControl!"
 	},
 	"licence" : "AGPL",
 	"author" : "ktn",
