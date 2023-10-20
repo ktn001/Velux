@@ -2,7 +2,7 @@
 	"id" : "velux",
 	"name" : "Velux",
 	"description" : {
-		"fr_FR": "Plugin permettant de coordonner les mouvements d'une fenêtre et d'un volet roulant Velux.<br/>Attention ce plugin nécessite le plugin hkControl!"
+		"fr_FR": "Plugin permettant de coordonner les mouvements d'une fenêtre et d'un volet roulant Velux. <br/> Attention ce plugin nécessite le plugin hkControl!"
 	},
 	"licence" : "AGPL",
 	"author" : "ktn",
