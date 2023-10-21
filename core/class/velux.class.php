@@ -559,6 +559,13 @@ class veluxCmd extends cmd {
 	}
 	*/
 
+	public function preInsert() {
+		if ($this->getType() == 'info') {
+			$this->setDisplay('showStatsOndashboard',0);
+			$this->setDisplay('showStatsOnmobile',0);
+		}
+	}
+
 	public function preSave() {
 		if (substr($this->getLogicalId(),-12) == ':target_info'){
 			$this->setConfiguration('repeatEventManagement','always');
