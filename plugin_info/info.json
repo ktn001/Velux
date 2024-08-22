@@ -1,25 +1,35 @@
 {
-	"id" : "velux",
-	"name" : "Velux",
-	"description" : {
-		"fr_FR": "Plugin permettant de coordonner les mouvements d'une fenêtre et d'un volet roulant Velux. <br/> Attention ce plugin nécessite le plugin hkControl!"
+	"id": "velux",
+	"name": "Velux",
+	"description": {
+		"fr_FR": "Plugin permettant de coordonner les mouvements d'une fenêtre et d'un volet roulant Velux. <br/> Attention ce plugin nécessite le plugin hkControl!",
+		"en_US": "Plugin for coordinating the movements of a window and a Velux roller shutter. <br/> Please note that this plugin requires the hkControl plugin!",
+		"es_ES": "Plugin para coordinar los movimientos de una ventana y una persiana Velux. ¡<Atención: este plugin requiere el plugin hkControl!",
+		"de_DE": "Plugin, mit dem die Bewegungen eines Fensters und eines Velux-Rollladens koordiniert werden können. <br/> Achtung: Dieses Plugin erfordert das Plugin hkControl!",
+		"it_IT": "Plugin per coordinare i movimenti di una finestra e di una tapparella Velux. <Attenzione: questo plugin richiede il plugin hkControl!",
+		"pt_PT": "Plugin para coordenar os movimentos de uma janela e de uma persiana Velux. <Aviso: este plugin requer o plugin hkControl!"
 	},
-	"licence" : "AGPL",
-	"author" : "ktn",
-	"require" : "4.3.0",
-	"category" : "devicecommunication",
-	"hasDependency" : false,
-	"hasOwnDeamon" : false,
-	"maxDependancyInstallTime" : 0,
-	"changelog" : "https://ktn001.github.io/fr_FR/velux/changelog",
-	"documentation" : "https://ktn001.github.io/fr_FR/velux/",
-	"changelog_beta" : "https://ktn001.github.io/fr_FR/velux/changelog",
-	"documentation_beta" : "https://ktn001.github.io/fr_FR/velux/beta.html",
-	"link" : {
-		"forum":"https://community.jeedom.com/tag/plugin-velux"
+	"licence": "AGPL",
+	"author": "ktn",
+	"require": "4.3.0",
+	"category": "devicecommunication",
+	"hasDependency": false,
+	"hasOwnDeamon": false,
+	"maxDependancyInstallTime": 0,
+	"changelog": "https://ktn001.github.io/fr_FR/velux/changelog",
+	"documentation": "https://ktn001.github.io/fr_FR/velux/",
+	"changelog_beta": "https://ktn001.github.io/fr_FR/velux/changelog",
+	"documentation_beta": "https://ktn001.github.io/fr_FR/velux/beta.html",
+	"link": {
+		"forum": "https://community.jeedom.com/tag/plugin-velux"
 	},
 	"language": [
-		"fr_FR"
+		"de_DE",
+		"en_US",
+		"es_ES",
+		"fr_FR",
+		"it_IT",
+		"pt_PT"
 	],
 	"compatibility": [
 		"smart",
