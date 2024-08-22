@@ -3,10 +3,9 @@ on:
   # but only for the main branch
   push:
     branches:
-      - beta
+      - master
   pull_request:
     branches:
-      - beta
       - master
       
 name : 'Code Lint Global'

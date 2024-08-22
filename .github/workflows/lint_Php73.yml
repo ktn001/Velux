@@ -3,12 +3,11 @@ name : 'Php 7.3'
 on:
   push:
     branches:
-      - beta
+      - master
     paths:
       - "**.php"
   pull_request:
     branches:
-      - beta
       - master
     paths:
       - "**.php"
